@@ -58,14 +58,15 @@ base_path = image_folder
 if not image_folder[-1] == '/':
     base_path += '/'
 
-dir_path = base_path+'respones/'+model_name.split('-')[0] +'/'
+out_dir_path = base_path+'respones/'+model_name.split('-')[0] +'/'
   
-os.makedirs(dir_path,exist_ok=True)
-print("Saving activation maps to: ",dir_path)
+os.makedirs(out_dir_path,exist_ok=True)
+print("Saving activation maps to: ",out_dir_path)
 
 
 for filename in tqdm(os.listdir(image_folder)):
-    if not os.path.isfile(filename):
+    if not os.path.isfile(image_folder+'/'+filename):
+        print('Skipping ',filename)
         continue
 
     img = cv2.cvtColor(cv2.imread(image_folder+'/'+filename),cv2.COLOR_BGR2RGB)
@@ -80,4 +81,4 @@ for filename in tqdm(os.listdir(image_folder)):
     for i in range(maps.shape[-1]):
         img_out = maps[:,:,i]
         prefix,ext = filename.split('.')
-        cv2.imwrite(dir_path+prefix+'_map-'+str(i)+'.'+ext,img_out)
+        cv2.imwrite(out_dir_path+prefix+'_map-'+str(i)+'.'+ext,img_out)
