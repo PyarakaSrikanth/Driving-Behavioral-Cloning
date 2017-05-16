@@ -276,7 +276,7 @@ def main(_):
 
     # Save model to file.
     suffix = '-'+FLAGS.output_suffix if FLAGS.output_suffix != '' else ''
-    model.save(FLAGS.model+'-'+suffix+'.h5')
+    model.save(FLAGS.model+suffix+'.h5')
 
     if __DEBUG__:
         for i in range(10):
