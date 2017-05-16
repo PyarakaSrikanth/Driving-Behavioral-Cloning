@@ -51,7 +51,6 @@ def load_logs(base_dir,all_camera=False, offset_correction=0.2):
         logs = pd.read_csv(logfile_path, sep=',', header=None, names=names, usecols=load_cols)
         logs = pd.melt(logs, id_vars=['steering'], var_name='camera', value_name='img_path')
 
-    print(logs.head(3))
     print("{} samples found in {}".format(len(logs),logfile_path))
 
     return logs
@@ -129,8 +128,8 @@ def process_logs(data_dir, dict_options=None):
     train_logs, test_logs = train_test_split(logs,train_size=train_test_ratio)
     train_logs, valid_logs = train_test_split(train_logs,train_size=0.8)
 
-    print("Split data into {} training and {} test samples".
-          format(len(train_logs),len(test_logs)))
+    print("Split data into {} training, {} validation and {} test samples".
+          format(len(train_logs),len(valid_logs),len(test_logs)))
 
     return (train_logs, valid_logs, test_logs)
 
@@ -227,7 +226,7 @@ def main(_):
     data_options = {'all_camera':True,
                     'steering_correction':0.1,
                     'drop_zero_prob':0.85,
-                    'drop_zero_range':0.3,
+                    'drop_zero_range':0.1,
                     'train_test_ratio':0.7
                    }
     train_logs, validation_logs, test_logs = \
