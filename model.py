@@ -239,7 +239,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('training_data_path', './training-data',
                     "Training data directory.")
 flags.DEFINE_integer('epochs', 4, "Number of epochs.")
-flags.DEFINE_integer('train_batch_size', 32, "Batch size.")
+flags.DEFINE_integer('train_batch_size', 64, "Batch size.")
 flags.DEFINE_integer('test_batch_size', 1, "Batch size.")
 flags.DEFINE_string('model', 'nvidia',
                     'Name of the model to use either lenet5 or nvidia (case-insensitive).')
@@ -251,8 +251,8 @@ def main(_):
 
     data_options = {'all_camera': True,
                     'steering_correction': 0.1,
-                    'drop_zero_prob': 0.85,
-                    'drop_zero_range': 0.2,
+                    'drop_zero_prob': 0.98,
+                    'drop_zero_range': 0.1,
                     'train_test_ratio': 0.7
                     }
     train_logs, validation_logs, test_logs = \
@@ -284,7 +284,7 @@ def main(_):
 
     nb_epochs = FLAGS.epochs
     samples_per_epoch = 2 * len(train_logs) if train_options.get('augment_flipped') \
-        else 2 * len(train_logs)
+        else  len(train_logs)
     model.fit_generator(train_generator(),
                         samples_per_epoch,
                         nb_epochs,
