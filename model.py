@@ -5,6 +5,7 @@ from sklearn.utils import shuffle
 from tqdm import tqdm
 
 import cv2
+import glob
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -294,12 +295,12 @@ def main(_):
     nb_epochs = FLAGS.epochs
     samples_per_epoch = 2*len(train_logs) if train_options.get('augment_flipped')\
                                           else 2*len(train_logs)
-    # model.fit_generator(train_generator(),
-    #                     samples_per_epoch,
-    #                     nb_epochs,
-    #                     validation_data=validation_generator(),
-    #                     nb_val_samples=len(validation_logs),
-    #                     verbose=2)
+    model.fit_generator(train_generator(),
+                        samples_per_epoch,
+                        nb_epochs,
+                        validation_data=validation_generator(),
+                        nb_val_samples=len(validation_logs),
+                        verbose=2)
 
     # Test the model.
     test_options = { 'batch_sz':FLAGS.test_batch_size,
@@ -328,18 +329,33 @@ def main(_):
 
         if os.path.isdir('./snapshots'):
 
-            print("Predicting angles for images in './sanpshots' folder...")
-            filenames = os.listdir('./snapshots')
+            print("Predicting angles for images in './snapshots' folder...")
+            files = glob.glob('./snapshots/*.jpg')
+            files.extend(glob.glob('./snapshots/*.png'))
+
+            if len(files) == 0:
+                print("No '.jpg' or '.png' images found in './snapshots'")
 
             if not os.path.isdir('./snapshots-predictions'):
                 os.mkdir('./snapshots-predictions')
 
-            for filename in tqdm(filenames):
-                imgdata = cv2.cvtColor(cv2.imread('./snapshots/' + filename),
-                                       cv2.COLOR_BGR2RGB)
-                prediction = model.predict(imgdata[None, :, :, :], batch_size=1,verbose=2)
-                cv2.putText(imgdata, str(prediction), (0, 100), cv2.FONT_HERSHEY_PLAIN, 1.0, 0)
-                cv2.imwrite('./snapshots-predictions/' + filename, imgdata)
+            for file in tqdm(files):
+                try:
+                    imgdata = cv2.cvtColor(cv2.imread(file),
+                                           cv2.COLOR_BGR2RGB)
+                    imgdata = imgdata.squeeze()
+
+                    prediction = model.predict(imgdata[None, :, :, :], batch_size=1,verbose=2)
+                    prediction = prediction.squeeze()
+
+                    cv2.putText(imgdata, str(prediction), (0, 100), cv2.FONT_HERSHEY_PLAIN, 1.0, 0)
+
+                    filename = file.split('/')[-1]
+                    cv2.imwrite('./snapshots-predictions/' + filename, imgdata)
+
+                except TypeError:
+                    print("TypeError when processing {}".format(file))
+
 
 
 if __name__ == '__main__':
