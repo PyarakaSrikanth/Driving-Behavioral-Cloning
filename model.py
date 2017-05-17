@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Convolution2D, Cropping2D, Dropout, Flatten,Dense, Lambda, MaxPooling2D
+from keras.layers import Convolution2D, Cropping2D, Dropout, Flatten, Dense, Lambda, MaxPooling2D
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from tqdm import tqdm
@@ -16,7 +16,6 @@ __DEBUG__ = True
 
 
 def correct_steering_angle(logs, offset_correction=0.2):
-
     # Steering correction for side cameras.
     # Convert dataframe to numly array for pain-free in-place update,
     # then convert back to dataframe.
@@ -32,43 +31,42 @@ def correct_steering_angle(logs, offset_correction=0.2):
 
     # Update selected rows and columns.
     update_rows = np.array(logs['camera'] == 'left')
-    tmp[update_rows,update_cols] += offset_correction
+    tmp[update_rows, update_cols] += offset_correction
 
     update_rows = np.array(logs['camera'] == 'right')
     tmp[update_rows, update_cols] -= offset_correction
 
     # Convert back to dataframe with proper column names.
-    logs = pd.DataFrame(tmp,columns=column_names)
+    logs = pd.DataFrame(tmp, columns=column_names)
 
     return logs
 
 
-def load_logs(base_dir,all_camera=False):
+def load_logs(base_dir, all_camera=False):
     """ 
     Loads driving logs for .csv file. base_dir must be a parent directory
     containing driving_log.csv and a child directory named IMG that has all
     training images.
     """
-    logfile_path = os.path.join(base_dir,'driving_log.csv')
+    logfile_path = os.path.join(base_dir, 'driving_log.csv')
 
     if all_camera:
         names = ['center', 'left', 'right', 'steering']
-        load_cols = [0,1,2,3]
+        load_cols = [0, 1, 2, 3]
 
     else:
-        names = ['center','steering']
-        load_cols = [0,3]
+        names = ['center', 'steering']
+        load_cols = [0, 3]
 
     logs = pd.read_csv(logfile_path, sep=',', header=None, names=names, usecols=load_cols)
     logs = pd.melt(logs, id_vars=['steering'], var_name='camera', value_name='img_path')
 
-    print("{} samples found in {}".format(len(logs),logfile_path))
+    print("{} samples found in {}".format(len(logs), logfile_path))
 
     return logs
 
 
 def drop_zero_steering(dataframe, drop_zero_prob=0.5, drop_range=0.1):
-
     orig_count = len(dataframe)
 
     near_zero_idx = np.where(abs(pd.to_numeric(dataframe['steering'])) < drop_range)[0]
@@ -78,17 +76,16 @@ def drop_zero_steering(dataframe, drop_zero_prob=0.5, drop_range=0.1):
     delete_indices = np.random.choice(near_zero_idx, delete_count, replace=False)
 
     # Update steering angles array.
-    dataframe.drop(dataframe.index[delete_indices],inplace=True)
+    dataframe.drop(dataframe.index[delete_indices], inplace=True)
 
     new_count = len(dataframe)
 
-    print("{} rows dropped.".format(orig_count-new_count))
+    print("{} rows dropped.".format(orig_count - new_count))
 
     return dataframe
 
 
 def process_logs(data_dir, dict_options=None):
-
     if dict_options is None:
         dict_options = {}
         print("Warning: No options passed to {}() defaults will be used"
@@ -106,7 +103,6 @@ def process_logs(data_dir, dict_options=None):
                              dict_options['all_camera'])
         else:
             logs = load_logs(data_dir)
-
 
         # Prune image paths corresponding to near-zero steering angle.
         if dict_options.get('drop_zero_prob'):
@@ -126,12 +122,11 @@ def process_logs(data_dir, dict_options=None):
 
             logs = drop_zero_steering(logs)
 
-
         # Adjust steering angles for left and right camera images.
         if dict_options.get('all_camera') is True:
             if dict_options.get('steering_correction'):
 
-                logs = correct_steering_angle(logs,dict_options['steering_correction'])
+                logs = correct_steering_angle(logs, dict_options['steering_correction'])
             else:
                 logs = correct_steering_angle(logs)
 
@@ -139,25 +134,22 @@ def process_logs(data_dir, dict_options=None):
             if dict_options.get('steering_correction') is not None:
                 print("Warning: Option 'steering_correction' is unused.")
 
-
-
     # Shuffle and Split into train, validation and test sets.
     train_test_ratio = \
         dict_options['train_test_ratio'] if dict_options.get('train_test_ratio') else 0.8
 
     logs = shuffle(logs)
 
-    train_logs, test_logs = train_test_split(logs,train_size=train_test_ratio)
-    train_logs, valid_logs = train_test_split(train_logs,train_size=0.8)
+    train_logs, test_logs = train_test_split(logs, train_size=train_test_ratio)
+    train_logs, valid_logs = train_test_split(train_logs, train_size=0.8)
 
     print("Split data into {} training, {} validation and {} test samples".
-          format(len(train_logs),len(valid_logs),len(test_logs)))
+          format(len(train_logs), len(valid_logs), len(test_logs)))
 
     return (train_logs, valid_logs, test_logs)
 
 
-def data_generator(data_dir,logs,dict_options=None):
-
+def data_generator(data_dir, logs, dict_options=None):
     def _g():
 
         n_examples = len(logs)
@@ -167,10 +159,10 @@ def data_generator(data_dir,logs,dict_options=None):
         while True:
             n_samples = (batch_sz // 2) if augment_flipped else batch_sz
 
-            idx = np.random.randint(0,n_examples,n_samples)
-            batch = logs[['steering','img_path']].iloc[idx]
+            idx = np.random.randint(0, n_examples, n_samples)
+            batch = logs[['steering', 'img_path']].iloc[idx]
 
-            img_dir = os.path.join(data_dir,'IMG/')
+            img_dir = os.path.join(data_dir, 'IMG/')
             image_data = []
 
             for path in batch['img_path']:
@@ -184,13 +176,12 @@ def data_generator(data_dir,logs,dict_options=None):
             angles = np.array(angles)
 
             if augment_flipped:
-                image_data = np.vstack((image_data,np.fliplr(image_data)))
-                angles = np.hstack((angles,-angles))
+                image_data = np.vstack((image_data, np.fliplr(image_data)))
+                angles = np.hstack((angles, -angles))
 
-            yield (image_data,angles)
+            yield (image_data, angles)
 
     return _g;
-
 
 
 def Nvidia(input_shape):
@@ -242,7 +233,6 @@ def Lenet5(input_shape):
     return model
 
 
-
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 
@@ -251,22 +241,22 @@ flags.DEFINE_string('training_data_path', './training-data',
 flags.DEFINE_integer('epochs', 4, "Number of epochs.")
 flags.DEFINE_integer('train_batch_size', 32, "Batch size.")
 flags.DEFINE_integer('test_batch_size', 1, "Batch size.")
-flags.DEFINE_string('model','nvidia',
+flags.DEFINE_string('model', 'nvidia',
                     'Name of the model to use either lenet5 or nvidia (case-insensitive).')
-flags.DEFINE_string('output_suffix','','Suffix added to saved model filename.')
+flags.DEFINE_string('output_suffix', '', 'Suffix added to saved model filename.')
 
 
 def main(_):
     train_data_path = FLAGS.training_data_path
 
-    data_options = {'all_camera':True,
-                    'steering_correction':0.2,
-                    'drop_zero_prob':0.95,
-                    'drop_zero_range':0.4,
-                    'train_test_ratio':0.7
-                   }
+    data_options = {'all_camera': True,
+                    'steering_correction': 0.2,
+                    'drop_zero_prob': 0.95,
+                    'drop_zero_range': 0.4,
+                    'train_test_ratio': 0.7
+                    }
     train_logs, validation_logs, test_logs = \
-        process_logs(train_data_path,dict_options=data_options)
+        process_logs(train_data_path, dict_options=data_options)
 
     if __DEBUG__:
         print("Using data options:\n{}".format(data_options))
@@ -276,25 +266,25 @@ def main(_):
 
     # Create model.
     if FLAGS.model.lower() == 'nvidia':
-        model = Nvidia([160,320,3])
+        model = Nvidia([160, 320, 3])
     elif FLAGS.model.lower() == 'lenet5':
-        model = Lenet5([160,320,3])
+        model = Lenet5([160, 320, 3])
     else:
         raise Exception('Not a valid model {}.'.format(FLAGS.model))
 
     # Train the model using a generator.
-    train_options = { 'batch_sz':FLAGS.train_batch_size,
-                      'augment_flipped':True }
-    validation_options =  { 'batch_sz':FLAGS.train_batch_size,
-                            'augment_flipped':False }
+    train_options = {'batch_sz': FLAGS.train_batch_size,
+                     'augment_flipped': True}
+    validation_options = {'batch_sz': FLAGS.train_batch_size,
+                          'augment_flipped': False}
 
-    train_generator = data_generator(train_data_path,train_logs, train_options)
+    train_generator = data_generator(train_data_path, train_logs, train_options)
     validation_generator = data_generator(train_data_path, validation_logs,
                                           validation_options)
 
     nb_epochs = FLAGS.epochs
-    samples_per_epoch = 2*len(train_logs) if train_options.get('augment_flipped')\
-                                          else 2*len(train_logs)
+    samples_per_epoch = 2 * len(train_logs) if train_options.get('augment_flipped') \
+        else 2 * len(train_logs)
     model.fit_generator(train_generator(),
                         samples_per_epoch,
                         nb_epochs,
@@ -303,59 +293,65 @@ def main(_):
                         verbose=2)
 
     # Test the model.
-    test_options = { 'batch_sz':FLAGS.test_batch_size,
-                     'augment_flipped':False }
-    test_generator = data_generator(train_data_path,test_logs,test_options)
-    test_loss = model.evaluate_generator(test_generator(),len(test_logs),
+    test_options = {'batch_sz': FLAGS.test_batch_size,
+                    'augment_flipped': False}
+    test_generator = data_generator(train_data_path, test_logs, test_options)
+    test_loss = model.evaluate_generator(test_generator(), len(test_logs),
                                          verbose=2)
     print("Test loss: {:.3f}".format(test_loss))
 
     # Save model to file.
-    suffix = '-'+FLAGS.output_suffix if FLAGS.output_suffix != '' else ''
-    model.save(FLAGS.model+suffix+'.h5')
+    suffix = '-' + FLAGS.output_suffix if FLAGS.output_suffix != '' else ''
+    model.save(FLAGS.model + suffix + '.h5')
 
     if __DEBUG__:
-        gen = test_generator()
-        for i in range(10):
-            imgdata,label = gen.__next__()
-            plt.imshow(imgdata.squeeze())
-            acutual_label = label.squeeze()
-            predicted_label = model.predict(imgdata, batch_size=1, verbose=2).squeeze()
-            plt.title("Predicted angle {} actual angle {}".
-                      format(acutual_label,predicted_label))
-            plt.show()
+        preview_predictions(test_generator(),model)
+        label_snapshots(model)
 
-    if __DEBUG__:
 
-        if os.path.isdir('./snapshots'):
 
-            print("Predicting angles for images in './snapshots' folder...")
-            files = glob.glob('./snapshots/*.jpg')
-            files.extend(glob.glob('./snapshots/*.png'))
+# Utility functions, mostly used for debugging.
+def preview_predictions(generator,model):
 
-            if len(files) == 0:
-                print("No '.jpg' or '.png' images found in './snapshots'")
+    for i in range(10):
+        imgdata, label = generator.__next__()
+        plt.imshow(imgdata.squeeze())
+        acutual_label = label.squeeze()
+        predicted_label = model.predict(imgdata, batch_size=1, verbose=2).squeeze()
+        plt.title("Predicted angle {} actual angle {}".
+                  format(acutual_label, predicted_label))
+        plt.show()
 
-            if not os.path.isdir('./snapshots-predictions'):
-                os.mkdir('./snapshots-predictions')
 
-            for file in tqdm(files):
-                try:
-                    imgdata = cv2.cvtColor(cv2.imread(file),
-                                           cv2.COLOR_BGR2RGB)
-                    imgdata = imgdata.squeeze()
+def label_snapshots(model):
+    if os.path.isdir('./snapshots'):
 
-                    prediction = model.predict(imgdata[None, :, :, :], batch_size=1,verbose=2)
-                    prediction = prediction.squeeze()
+        print("Predicting angles for images in './snapshots' folder...")
+        files = glob.glob('./snapshots/*.jpg')
+        files.extend(glob.glob('./snapshots/*.png'))
 
-                    cv2.putText(imgdata, str(prediction), (0, 100), cv2.FONT_HERSHEY_PLAIN, 1.0, 0)
+        if len(files) == 0:
+            print("No '.jpg' or '.png' images found in './snapshots'")
 
-                    filename = file.split('/')[-1]
-                    cv2.imwrite('./snapshots-predictions/' + filename, imgdata)
+        if not os.path.isdir('./snapshots-predictions'):
+            os.mkdir('./snapshots-predictions')
 
-                except TypeError:
-                    print("TypeError when processing {}".format(file))
+        for file in tqdm(files):
+            try:
+                imgdata = cv2.cvtColor(cv2.imread(file),
+                                       cv2.COLOR_BGR2RGB)
+                imgdata = imgdata.squeeze()
 
+                prediction = model.predict(imgdata[None, :, :, :], batch_size=1, verbose=2)
+                prediction = prediction.squeeze()
+
+                cv2.putText(imgdata, str(prediction), (0, 100), cv2.FONT_HERSHEY_PLAIN, 1.0, 0)
+
+                filename = file.split('/')[-1]
+                cv2.imwrite('./snapshots-predictions/' + filename, imgdata)
+
+            except TypeError:
+                print("TypeError when processing {}".format(file))
 
 
 if __name__ == '__main__':
