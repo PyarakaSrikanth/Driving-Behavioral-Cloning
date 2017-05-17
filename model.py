@@ -197,19 +197,19 @@ def Nvidia(input_shape):
     model.add(Cropping2D(((70, 25), (0, 0))))
 
     model.add(Convolution2D(24, 5, 5, activation='relu', subsample=(2, 2)))
-    model.add(Dropout(0.3))
+    model.add(Dropout(0.2))
 
     model.add(Convolution2D(36, 5, 5, activation='relu', subsample=(2, 2)))
-    model.add(Dropout(0.3))
+    model.add(Dropout(0.2))
 
     model.add(Convolution2D(48, 5, 5, activation='relu', subsample=(2, 2)))
-    model.add(Dropout(0.3))
+    model.add(Dropout(0.1))
 
     model.add(Convolution2D(64, 3, 3, activation='relu'))
-    model.add(Dropout(0.3))
+    model.add(Dropout(0.1))
 
     model.add(Convolution2D(64, 3, 3, activation='relu'))
-    model.add(Dropout(0.3))
+    model.add(Dropout(0.1))
 
     model.add(Flatten())
 
@@ -269,8 +269,8 @@ def main(_):
 
     data_options = {'all_camera': True,
                     'steering_correction': 0.2,
-                    'drop_zero_prob': 0.85,
-                    'drop_zero_range': 0.1,
+                    'drop_zero_prob': 0.75,
+                    'drop_zero_range': 0.05,
                     'train_test_ratio': 0.7
                     }
     train_logs, validation_logs, test_logs = \
