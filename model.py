@@ -20,6 +20,7 @@ def correct_steering_angle(logs, offset_correction=0.2):
     # Convert dataframe to numly array for pain-free in-place update,
     # then convert back to dataframe.
 
+    print("Applying steering correction {}...".format(offset_correction))
     # Save column names.
     column_names = logs.columns
 
@@ -39,6 +40,8 @@ def correct_steering_angle(logs, offset_correction=0.2):
     # Convert back to dataframe with proper column names.
     logs = pd.DataFrame(tmp, columns=column_names)
 
+    print("Steering correction applied.")
+
     return logs
 
 
@@ -48,6 +51,7 @@ def load_logs(base_dir, all_camera=False):
     containing driving_log.csv and a child directory named IMG that has all
     training images.
     """
+    print("Loading raw logs...")
     logfile_path = os.path.join(base_dir, 'driving_log.csv')
 
     if all_camera:
@@ -67,6 +71,7 @@ def load_logs(base_dir, all_camera=False):
 
 
 def drop_zero_steering(dataframe, drop_zero_prob=0.5, drop_range=0.1):
+    print("Reducing near-zero steeering samples.")
     orig_count = len(dataframe)
 
     near_zero_idx = np.where(abs(pd.to_numeric(dataframe['steering'])) < drop_range)[0]
@@ -239,7 +244,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('training_data_path', './training-data',
                     "Training data directory.")
 flags.DEFINE_integer('epochs', 4, "Number of epochs.")
-flags.DEFINE_integer('train_batch_size', 64, "Batch size.")
+flags.DEFINE_integer('train_batch_size', 32, "Batch size.")
 flags.DEFINE_integer('test_batch_size', 1, "Batch size.")
 flags.DEFINE_string('model', 'nvidia',
                     'Name of the model to use either lenet5 or nvidia (case-insensitive).')
@@ -250,7 +255,7 @@ def main(_):
     train_data_path = FLAGS.training_data_path
 
     data_options = {'all_camera': True,
-                    'steering_correction': 0.1,
+                    'steering_correction': 0.2,
                     'drop_zero_prob': 0.98,
                     'drop_zero_range': 0.1,
                     'train_test_ratio': 0.7
@@ -258,7 +263,7 @@ def main(_):
     train_logs, validation_logs, test_logs = \
         process_logs(train_data_path, dict_options=data_options)
 
-    if __DEBUG__:
+    if True:
         print("Using data options:\n{}".format(data_options))
         plt.hist(train_logs['steering'], bins=np.linspace(-1, 1, 20))
         plt.title('Steering Angle Distribution')
