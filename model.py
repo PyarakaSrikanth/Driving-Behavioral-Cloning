@@ -12,7 +12,7 @@ import os
 import pandas as pd
 import tensorflow as tf
 
-__DEBUG__ = False
+__DEBUG__ = True
 
 
 def correct_steering_angle(logs, offset_correction=0.2):
@@ -256,11 +256,11 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string('training_data_path', './training-data',
                     "Training data directory.")
+flags.DEFINE_string('model', 'nvidia',
+                    'Name of the model to use either lenet5 or nvidia (case-insensitive).')
 flags.DEFINE_integer('epochs', 5, "Number of epochs.")
 flags.DEFINE_integer('train_batch_size', 32, "Batch size.")
 flags.DEFINE_integer('test_batch_size', 1, "Batch size.")
-flags.DEFINE_string('model', 'nvidia',
-                    'Name of the model to use either lenet5 or nvidia (case-insensitive).')
 flags.DEFINE_string('output_suffix', '', 'Suffix added to saved model filename.')
 
 
@@ -320,7 +320,7 @@ def main(_):
 
     # Save model to file.
     suffix = '-' + FLAGS.output_suffix if FLAGS.output_suffix != '' else ''
-    model.save(FLAGS.model + suffix + '.h5')
+    model.save('model'+ suffix + '.h5')
 
     if __DEBUG__:
         preview_predictions(test_generator(),model)
@@ -381,6 +381,7 @@ def label_snapshots(model):
                 cv2.putText(imgdata, str(prediction), (0, 100), cv2.FONT_HERSHEY_PLAIN, 1.0, 0)
 
                 filename = file.split('/')[-1]
+                imgdata = cv2.cvtColor(imgdata,cv2.COLOR_RGB2BGR)
                 cv2.imwrite('./snapshots-predictions/' + filename, imgdata)
 
             except TypeError:
