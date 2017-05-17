@@ -2,6 +2,7 @@ from keras.models import Sequential
 from keras.layers import Convolution2D, Cropping2D, Dropout, Flatten,Dense, Lambda, MaxPooling2D
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
+from tqdm import tqdm
 
 import cv2
 import matplotlib.pyplot as plt
@@ -10,24 +11,38 @@ import os
 import pandas as pd
 import tensorflow as tf
 
-flags = tf.app.flags
-FLAGS = flags.FLAGS
-
-flags.DEFINE_string('training_data_path', './training-data',
-                    "Training data directory.")
-flags.DEFINE_integer('epochs', 5, "Number of epochs.")
-flags.DEFINE_integer('train_batch_size', 32, "Batch size.")
-flags.DEFINE_integer('test_batch_size', 1, "Batch size.")
-flags.DEFINE_string('model','nvidia',
-                    'Name of the model to use either lenet5 or nvidia (case-insensitive).')
-flags.DEFINE_string('output_suffix','','Suffix added to saved model filename.')
+__DEBUG__ = True
 
 
+def correct_steering_angle(logs, offset_correction=0.2):
 
-__DEBUG__ = False
+    # Steering correction for side cameras.
+    # Convert dataframe to numly array for pain-free in-place update,
+    # then convert back to dataframe.
+
+    # Save column names.
+    column_names = logs.columns
+
+    # Get column id from name
+    update_cols = column_names.get_loc('steering')
+
+    # Convert dataframe to numpy array.
+    tmp = np.array(logs)
+
+    # Update selected rows and columns.
+    update_rows = np.array(logs['camera'] == 'left')
+    tmp[update_rows,update_cols] += offset_correction
+
+    update_rows = np.array(logs['camera'] == 'right')
+    tmp[update_rows, update_cols] -= offset_correction
+
+    # Convert back to dataframe with proper column names.
+    logs = pd.DataFrame(tmp,columns=column_names)
+
+    return logs
 
 
-def load_logs(base_dir,all_camera=False, offset_correction=0.2):
+def load_logs(base_dir,all_camera=False):
     """ 
     Loads driving logs for .csv file. base_dir must be a parent directory
     containing driving_log.csv and a child directory named IMG that has all
@@ -38,18 +53,13 @@ def load_logs(base_dir,all_camera=False, offset_correction=0.2):
     if all_camera:
         names = ['center', 'left', 'right', 'steering']
         load_cols = [0,1,2,3]
-        logs = pd.read_csv(logfile_path, sep=',', header=None, names=names, usecols=load_cols)
-        logs = pd.melt(logs, id_vars=['steering'], var_name='camera', value_name='img_path')
-
-        # Steering correction for side cameras.
-        logs['steering'].loc[logs['camera'] == 'left'] += offset_correction
-        logs['steering'].loc[logs['camera'] == 'right'] -= offset_correction
 
     else:
         names = ['center','steering']
         load_cols = [0,3]
-        logs = pd.read_csv(logfile_path, sep=',', header=None, names=names, usecols=load_cols)
-        logs = pd.melt(logs, id_vars=['steering'], var_name='camera', value_name='img_path')
+
+    logs = pd.read_csv(logfile_path, sep=',', header=None, names=names, usecols=load_cols)
+    logs = pd.melt(logs, id_vars=['steering'], var_name='camera', value_name='img_path')
 
     print("{} samples found in {}".format(len(logs),logfile_path))
 
@@ -85,26 +95,19 @@ def process_logs(data_dir, dict_options=None):
 
         logs = load_logs(data_dir)
         logs = drop_zero_steering(logs)
+        logs = correct_steering_angle(logs)
 
     else:
 
+        # Load image paths.
         if dict_options.get('all_camera'):
-
-            if dict_options.get('steering_correction') is None:
-
-                logs = load_logs(data_dir,
-                                 dict_options.get('all_camera'))
-
-            else:
-                logs = load_logs(data_dir,
-                                 dict_options.get('all_camera'),
-                                 dict_options.get('steering_correction'))
-
+            logs = load_logs(data_dir,
+                             dict_options['all_camera'])
         else:
-            if dict_options.get('steering_correction') is not None:
-                print("Warning option 'steering_correction' is unused.")
+            logs = load_logs(data_dir)
 
 
+        # Prune image paths corresponding to near-zero steering angle.
         if dict_options.get('drop_zero_prob'):
 
             if dict_options.get('drop_zero_range'):
@@ -117,7 +120,25 @@ def process_logs(data_dir, dict_options=None):
                 logs = drop_zero_steering(logs,
                                           dict_options['drop_zero_prob'])
         else:
+            if dict_options.get('drop_zero_range'):
+                print("Warning: Option 'drop_zero_range' is unused.")
+
             logs = drop_zero_steering(logs)
+
+
+        # Adjust steering angles for left and right camera images.
+        if dict_options.get('all_camera') is True:
+            if dict_options.get('steering_correction'):
+
+                logs = correct_steering_angle(logs,dict_options['steering_correction'])
+            else:
+                logs = correct_steering_angle(logs)
+
+        else:
+            if dict_options.get('steering_correction') is not None:
+                print("Warning: Option 'steering_correction' is unused.")
+
+
 
     # Shuffle and Split into train, validation and test sets.
     train_test_ratio = \
@@ -220,13 +241,27 @@ def Lenet5(input_shape):
     return model
 
 
+
+flags = tf.app.flags
+FLAGS = flags.FLAGS
+
+flags.DEFINE_string('training_data_path', './training-data',
+                    "Training data directory.")
+flags.DEFINE_integer('epochs', 4, "Number of epochs.")
+flags.DEFINE_integer('train_batch_size', 32, "Batch size.")
+flags.DEFINE_integer('test_batch_size', 1, "Batch size.")
+flags.DEFINE_string('model','nvidia',
+                    'Name of the model to use either lenet5 or nvidia (case-insensitive).')
+flags.DEFINE_string('output_suffix','','Suffix added to saved model filename.')
+
+
 def main(_):
     train_data_path = FLAGS.training_data_path
 
     data_options = {'all_camera':True,
-                    'steering_correction':0.1,
-                    'drop_zero_prob':0.85,
-                    'drop_zero_range':0.1,
+                    'steering_correction':0.2,
+                    'drop_zero_prob':0.95,
+                    'drop_zero_range':0.4,
                     'train_test_ratio':0.7
                    }
     train_logs, validation_logs, test_logs = \
@@ -234,7 +269,6 @@ def main(_):
 
     if __DEBUG__:
         print("Using data options:\n{}".format(data_options))
-        import matplotlib.pyplot as plt
         plt.hist(train_logs['steering'], bins=np.linspace(-1, 1, 20))
         plt.title('Steering Angle Distribution')
         plt.show()
@@ -258,12 +292,14 @@ def main(_):
                                           validation_options)
 
     nb_epochs = FLAGS.epochs
-    model.fit_generator(train_generator(),
-                        len(train_logs),
-                        nb_epochs,
-                        validation_data=validation_generator(),
-                        nb_val_samples=len(validation_logs),
-                        verbose=2)
+    samples_per_epoch = 2*len(train_logs) if train_options.get('augment_flipped')\
+                                          else 2*len(train_logs)
+    # model.fit_generator(train_generator(),
+    #                     samples_per_epoch,
+    #                     nb_epochs,
+    #                     validation_data=validation_generator(),
+    #                     nb_val_samples=len(validation_logs),
+    #                     verbose=2)
 
     # Test the model.
     test_options = { 'batch_sz':FLAGS.test_batch_size,
@@ -278,23 +314,27 @@ def main(_):
     model.save(FLAGS.model+suffix+'.h5')
 
     if __DEBUG__:
+        gen = test_generator()
         for i in range(10):
-            imgdata,label = test_generator.next()
-            plt.imshow(imgdata)
-            plt.title("Predicted angle {:.3f} actual angle {:.3f}".
-                      format(model.predict(imgdata, batch_size=1,verbose=2)))
+            imgdata,label = gen.__next__()
+            plt.imshow(imgdata.squeeze())
+            acutual_label = label.squeeze()
+            predicted_label = model.predict(imgdata, batch_size=1, verbose=2).squeeze()
+            plt.title("Predicted angle {} actual angle {}".
+                      format(acutual_label,predicted_label))
             plt.show()
 
     if __DEBUG__:
 
         if os.path.isdir('./snapshots'):
 
+            print("Predicting angles for images in './sanpshots' folder...")
             filenames = os.listdir('./snapshots')
 
             if not os.path.isdir('./snapshots-predictions'):
                 os.mkdir('./snapshots-predictions')
 
-            for filename in filenames:
+            for filename in tqdm(filenames):
                 imgdata = cv2.cvtColor(cv2.imread('./snapshots/' + filename),
                                        cv2.COLOR_BGR2RGB)
                 prediction = model.predict(imgdata[None, :, :, :], batch_size=1,verbose=2)
