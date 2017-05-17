@@ -256,7 +256,7 @@ def main(_):
 
     data_options = {'all_camera': True,
                     'steering_correction': 0.2,
-                    'drop_zero_prob': 0.98,
+                    'drop_zero_prob': 0.85,
                     'drop_zero_range': 0.1,
                     'train_test_ratio': 0.7
                     }
