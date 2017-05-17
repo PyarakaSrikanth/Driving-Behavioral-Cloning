@@ -30,6 +30,12 @@ if __name__ == '__main__':
         help='Path to image folder. This is where activations will be saved.'
     )
 
+    parser.add_argument(
+        'layer_index',
+        type=int,
+        help='Index of layer for which to to find activations.'
+    )
+
     args = parser.parse_args()
     
     model_name = args.model
@@ -48,8 +54,9 @@ model = load_model(model_name)
 # In[ ]:
 
 input = model.input
-output = model.layers[3].output
-functor = K.function([input], [output])
+input_img_shape = np.array(list(model.layers[0].input_shape[1:3])).T
+output = model.layers[args.layer_index].output
+functor = K.function([input]+ [K.learning_phase()], [output])
 
 
 # In[ ]:
@@ -70,7 +77,12 @@ for filename in tqdm(os.listdir(image_folder)):
         continue
 
     img = cv2.cvtColor(cv2.imread(image_folder+'/'+filename),cv2.COLOR_BGR2RGB)
-    activations = functor([img[None,:,:,:]])
+
+    if not np.array_equal(img.shape[0:2],input_img_shape):
+        img = cv2.resize(img,tuple(input_img_shape))
+        img = np.swapaxes(img, 0, 1)
+
+    activations = functor([img[None,:,:,:],False])
     
     maps = activations[0]
     maps = (maps.squeeze() + 0.5)* 255
