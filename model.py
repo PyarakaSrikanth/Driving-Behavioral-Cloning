@@ -197,15 +197,28 @@ def Nvidia(input_shape):
     model.add(Cropping2D(((70, 25), (0, 0))))
 
     model.add(Convolution2D(24, 5, 5, activation='relu', subsample=(2, 2)))
+    model.add(Dropout(0.3))
+
     model.add(Convolution2D(36, 5, 5, activation='relu', subsample=(2, 2)))
+    model.add(Dropout(0.3))
+
     model.add(Convolution2D(48, 5, 5, activation='relu', subsample=(2, 2)))
+    model.add(Dropout(0.3))
+
     model.add(Convolution2D(64, 3, 3, activation='relu'))
+    model.add(Dropout(0.3))
+
     model.add(Convolution2D(64, 3, 3, activation='relu'))
+    model.add(Dropout(0.3))
 
     model.add(Flatten())
 
     model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.5))
+
     model.add(Dense(50, activation='relu'))
+    model.add(Dropout(0.3))
+
     model.add(Dense(10, activation='relu'))
     model.add(Dense(1))
 
@@ -243,7 +256,7 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string('training_data_path', './training-data',
                     "Training data directory.")
-flags.DEFINE_integer('epochs', 4, "Number of epochs.")
+flags.DEFINE_integer('epochs', 5, "Number of epochs.")
 flags.DEFINE_integer('train_batch_size', 32, "Batch size.")
 flags.DEFINE_integer('test_batch_size', 1, "Batch size.")
 flags.DEFINE_string('model', 'nvidia',
