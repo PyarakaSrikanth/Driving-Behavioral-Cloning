@@ -12,7 +12,7 @@ import os
 import pandas as pd
 import tensorflow as tf
 
-__DEBUG__ = True
+__DEBUG__ = False
 
 
 def correct_steering_angle(logs, offset_correction=0.2):
@@ -250,9 +250,9 @@ def main(_):
     train_data_path = FLAGS.training_data_path
 
     data_options = {'all_camera': True,
-                    'steering_correction': 0.2,
-                    'drop_zero_prob': 0.95,
-                    'drop_zero_range': 0.4,
+                    'steering_correction': 0.1,
+                    'drop_zero_prob': 0.85,
+                    'drop_zero_range': 0.2,
                     'train_test_ratio': 0.7
                     }
     train_logs, validation_logs, test_logs = \
@@ -312,6 +312,10 @@ def main(_):
 
 # Utility functions, mostly used for debugging.
 def preview_predictions(generator,model):
+    ''' 
+    Plots a few images from the test dataset and shows the actual and predicted
+    steering angles. Useful for sanity-checking the model.
+    '''
 
     for i in range(10):
         imgdata, label = generator.__next__()
@@ -324,6 +328,17 @@ def preview_predictions(generator,model):
 
 
 def label_snapshots(model):
+    '''
+    Label snapshots of a driving track with predictions from the current model.
+    Parameter model should be a compiled and trained Keras model instance.
+    
+    This function searches for .jpg or .png images in a directory named 'snapshots'
+    inside the current working directory and writes labeled images to 'snapshots-predictions'
+    directory inside the working directory.
+
+    This can be used to quickly test a model on challenging parts of a track, instead of 
+    downloading the model from AWS and then testing in the simulator.
+    '''
     if os.path.isdir('./snapshots'):
 
         print("Predicting angles for images in './snapshots' folder...")
