@@ -1,6 +1,6 @@
-# Behaviorial Cloning Project
+# Learning To Drive Using Behaviorial Cloning
 
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
+![Autonomous Driving](writeup-resources/go-autonomous.png)
 
 Overview
 ---
