@@ -227,5 +227,7 @@ Since the numerical value of loss could not be related to performance, a small n
 ![labeled image 1](writeup-resources/labeled-test-images/figure_8.png)
 ![labeled image 2](writeup-resources/labeled-test-images/figure_6.png)
 
+These images helped check if the model was making sensible predictions. The code for this sanity checking is refactored into the function [`preview_predictions()`](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/08ab6742c4b76a96857c5704f97038ece75f88aa/model.py#L332) which is only run if the '__DEBUG__' flag at the top of the file is True.
+
 
 
