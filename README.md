@@ -139,7 +139,9 @@ In the equalized logs, steering angles were corrected for images taken from left
 ![processed data histogram](writeup-resources/data-distribution.png) 
 
 ## Model Architecture
-The LeNet5 architecture was used initially. The [`Lenet5()`](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/08ab6742c4b76a96857c5704f97038ece75f88aa/model.py#L230) function reuturn a regression model that adapts the **LeNet5** classification model for our purpose, replacing the last dense layer of 10 neurons with a single neuron that predicts a real value (steering angle). The loss function has also been changed to mean squared loss (MSE) for regression. The model has the following layers
+
+### Lenet5 
+The LeNet5 architecture was used initially. The [`Lenet5()`](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/08ab6742c4b76a96857c5704f97038ece75f88aa/model.py#L230) function returns a regression model that adapts the **LeNet5** classification model for our purpose, replacing the last dense layer of 10 neurons with a single neuron that predicts a real value (steering angle). The loss function has also been changed to mean squared loss (MSE) for regression. The model has the following layers
 
 | Layer         | Layer Specs                                | Output Size |
 |---------------|--------------------------------------------|-------------|
@@ -156,3 +158,36 @@ The LeNet5 architecture was used initially. The [`Lenet5()`](https://github.com/
 | Dense         | Fully connected layer. No regularization   | 84          |
 | Dense         | Output layer                               | 1           |
 
+A LeNet5 model had 1,935,161 parameters. The model was slow to learn, owing to the large number of parameters, but seemed to train well, and could drive almost through the entire track. However excruciatingly slow download speeds from AWS meant that downloading and testing the model was consuming most of the time.
+
+### Nvidia model.
+The Nvidia model was initially the exact model described by Nvidia reserachers in their [paper](https://arxiv.org/pdf/1604.07316.pdf) titled **"End to End Learning for Self-Driving Cars"**. Dropout layers were later added to mitigate any over-fitting, becasue the training data was from a small, single driving track. Once again mean sqaured loss (MSE) was used and The final architecture looked like below:
+
+| Layer         | Layer Specs                                | Output Size |
+|---------------|--------------------------------------------|-------------|
+| Normalization | lambda x: x / 255 - 0.5                    | 160x320x3   |
+| Cropping      | Cropping2D(cropping=((70, 25), (0, 0))     | 65x320x3    |
+| Convolution   | 24, 5x5 kernels, 2x2 stride, valid padding | 31x158x24   |
+| RELU          | Non-linearity                              | 31x158x24   |
+| Dropout       | Probabilistic regularization (p=0.2)       | 31x158x24   |
+| Convolution   | 36, 5x5 kernels, 2x2 stride, valid padding | 14x77x36    |
+| RELU          | Non-linearity                              | 14x77x36    |
+| Dropout       | Probabilistic regularization (p=0.2)       | 14x77x36    |
+| Convolution   | 48, 5x5 kernels, 1x1 stride, valid padding | 5x37x48     |
+| RELU          | Non-linearity                              | 5x37x48     |
+| Dropout       | Probabilistic regularization (p=0.1)       | 5x37x48     |
+| Convolution   | 64, 3x3 kernels, 1x1 stride, valid padding | 3x35x64     |
+| RELU          | Non-linearity                              | 3x35x64     |
+| Dropout       | Probabilistic regularization (p=0.1)       | 3x35x64     |
+| Convolution   | 64, 3x3 kernels, 1x1 stride, valid padding | 1x33x64     |
+| RELU          | Non-linearity                              | 1x33x64     |
+| Dropout       | Probabilistic regularization (p=0.1)       | 1x33x64     |
+| Flatten       | Convert to vector.                         | 2112        |
+| Dense         | Fully connected layer. No regularization   | 100         |
+| Dropout       | Probabilistic regularization (p=0.5)       | 100         |
+| Dense         | Fully connected layer. No regularization   | 50          |
+| Dropout       | Probabilistic regularization (p=0.3)       | 50          |
+| Dense         | Fully connected layer. No regularization   | 10          |
+| Dense         | Output prediction layer.                   | 1           |
+
+Although the Nvidia model is taller it has only 348,219 parameters and is much faster to train. 
