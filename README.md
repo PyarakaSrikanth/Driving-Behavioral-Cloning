@@ -1,10 +1,10 @@
-# Learning To Drive Using Behaviorial Cloning
+# Learning To Drive Using Behavioral Cloning
 
 ![Autonomous Driving](writeup-resources/go-autonomous.png)
 
 Overview
 ---
-This repository contains code and other resources for Behaviorial Cloning project for [Udacity Self-driving Car Nano Degree](https://in.udacity.com/course/self-driving-car-engineer-nanodegree--nd013/).
+This repository contains code and other resources for Behavioral Cloning project for [Udacity Self-driving Car Nano Degree](https://in.udacity.com/course/self-driving-car-engineer-nanodegree--nd013/).
 
 The aim of the project is to train a Deep Convolutional Neural Network(CNN) model to drive a car in a simulator by learning from data gathered by a human driver driving in the same simulator. While a simulator could produce lots of data, like steering angle, speed, throttle etc, this project focused on learning to predict the steering angle by looking at images captured from front facing cameras mounted on the car. 
 
@@ -250,13 +250,27 @@ This was most likely caused by the time delay between a frame capture by the sim
 
 
 ### CT Scan of The Model's Brain
-To find more about what features the model has learnt, a script was written to plot the activation maps of the model when fed with an input image. The script file **keras-vis.py** can be run as described near the top of this file.
+To find more about what features the model has learnt, a script was written to plot the activation maps of the model when fed with an input image. The script file **keras-vis.py** can be run as described near the top of this file. The images below show a sample input image and the activations it generates in the first convolution layer in LeNet5 and Nvidia models. The activation maps have different sizes because the architectures use different strides and so reduce the image size by different amounts. 
 
 ![input image](writeup-resources/activations/2017_05_17_17_54_55_176.jpg)
 
 ![Activations for input image](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/master/writeup-resources/activations/respones/lenet5/2017_05_17_17_49_36_505-layer2-map.jpg)
 
 ![Activations for input image](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/master/writeup-resources/activations/respones/nvidia.h5/2017_05_17_17_49_36_505-layer2-map.jpg)
+
+## Results
+
+### Testing on Track
+
+The model described above was tested in autonomous mode. It was able to drive successflly without any major hiccups. There was some initial swerving but the car settled in the middle of the track and did many laps while staying in the center. The video of this test run is available in this repository as [video.mp4](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/master/video.py) and also on [YouTube](https://youtu.be/ZyJvs_rIiNg). A third person view of a similar test can be viewed on [YouTube](https://youtu.be/-WX04XmoqR4).
+
+### Know Limitations
+
+* The car swerves wildly if driving speed is too high. 
+This has been redmedied to some degree by reducing overfitting as descibed above. This could be because at high speed the position of the car changes significantly by time the model returns a prediction. For the time being the top speed has been fixed at 20MPH to remedy this. It would be interesting to train a model on a combination of speed, throttle and camera images. Intuitively, the model should learn to focus on different parts of the vertical strech of a frame depending on the current speed. 
+
+* The model performs poorly if simulator graphics quality is changed significantly. 
+This is likely due to a big diffrence between the frame images in the two scenarios. This can be confirmed by looking at the activation maps for images taken of the same portion of a track at different quality settings.
 
 
 
