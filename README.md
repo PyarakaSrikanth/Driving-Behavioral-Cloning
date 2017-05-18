@@ -87,3 +87,14 @@ python model.py [<training_dat_dir>] [<model>] [<epochs>] [<train_batch_size>] [
 - **model_name_suffix** By default the generated model is saved as simply model.h5. If a suffix is passed the file will be named `model-model_name_suffix.h5`
 
 
+### `keras-vis.py`
+This file generates activation maps from a model.h5 file. To generate the activation maps run the following command:
+
+```sh
+python keras-vis.py [<model>] [<img_dir>] [<layer>]
+```
+- **model** is the path to a model.h5 file.
+- **img_dir** is the path to the directory containing images for which activation maps have to be generated.
+- **layer** is an integer specifying the layer index for which activations are to be generated.
+
+This will process each image and extract all activation maps for the image by runninng the model on the image and saving the output of the specified layer. The individual activation maps of an image are then combined into a single activation map and saved in `img_dir/responses/<model>/`. 
