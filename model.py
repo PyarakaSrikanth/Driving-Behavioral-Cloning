@@ -12,7 +12,7 @@ import os
 import pandas as pd
 import tensorflow as tf
 
-__DEBUG__ = True
+__DEBUG__ = False
 
 
 def correct_steering_angle(logs, offset_correction=0.2):
