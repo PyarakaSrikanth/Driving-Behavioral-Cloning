@@ -6,7 +6,7 @@ import argparse
 import cv2
 import numpy as np
 import os
-import tensorflow as tf
+import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from keras import backend as K
@@ -54,7 +54,7 @@ model = load_model(model_name)
 # In[ ]:
 
 input = model.input
-input_img_shape = np.array(list(model.layers[0].input_shape[1:3])).T
+input_img_shape = np.array(list(model.layers[0].input_shape[1:3]))
 output = model.layers[args.layer_index].output
 functor = K.function([input]+ [K.learning_phase()], [output])
 
@@ -77,10 +77,14 @@ for filename in tqdm(os.listdir(image_folder)):
         continue
 
     img = cv2.cvtColor(cv2.imread(image_folder+'/'+filename),cv2.COLOR_BGR2RGB)
+    print(img.shape,input_img_shape)
 
-    if not np.array_equal(img.shape[0:2],input_img_shape):
-        img = cv2.resize(img,tuple(input_img_shape))
-        img = np.swapaxes(img, 0, 1)
+    if img.shape[0] != input_img_shape[1] or img.shape[1] != input_img_shape[0]:
+        img = cv2.resize(img,(input_img_shape[1],input_img_shape[0]))
+        # plt.imshow(img)
+        # plt.title(filename)
+        # plt.show()
+
 
     activations = functor([img[None,:,:,:],False])
     
