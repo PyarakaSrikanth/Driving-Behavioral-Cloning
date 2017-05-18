@@ -118,6 +118,10 @@ To collect human driving data, the simulator was run in training mode. The car w
 
 The simulator recorded screenshots taken from the perspective of 3 cameras mounted a the fron of the car at the left, center and a right of the hood. Alongwith these images the simulator also recorded the driving parameters at the instant an image was captured. These included steering angle, throttle and speed and were written to **driving_log.csv**.
 
+![left camera](writeup-resources/left.jpg) 
+![center camera](writeup-resources/center.jpg) 
+![right camera](writeup-resources/right.jpg) 
+
 ### Loading the data
 There were about 80,000 images whose paths were recorded in **driving_log.csv**. So actual images were not loaded all at once, instead they were loaded a few samples at a time using a Python generator described later. However, all the driving logs were loaded and analyzed, but only a small number of logs retained, as described below.  
 
@@ -130,4 +134,7 @@ Models trained on the raw data showed a propensity to drive straight ahead. This
 
 To remove this bias the logs were equalized by calling [`drop_zero_steering()`](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/08ab6742c4b76a96857c5704f97038ece75f88aa/model.py#L73). Driving logs for 75% percent of steering angles in the range [-0.05,0.05] were dropped. The percentage and range values are configurable via training options in the [code](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/08ab6742c4b76a96857c5704f97038ece75f88aa/model.py#L270).
 
-In the equalized logs, steering angles were corrected for images taken from left and right cameras.
+In the equalized logs, steering angles were corrected for images taken from left and right cameras. The simulator records images from three cameras as discussed above. The steering angles for left camera were increased reinforcing the need for a harder right turn, while the angles for right camera were reduced by a similar amount. A correction factor of 0.2 as suggested in the lecture videos, was passed to [`correct_steering_angle()`](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/08ab6742c4b76a96857c5704f97038ece75f88aa/model.py#L18) The distribution of driving anlges after the preprocessing looked much less skewed.
+
+![processed data histogram](writeup-resources/data-distribution.png) 
+
