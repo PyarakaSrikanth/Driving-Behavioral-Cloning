@@ -6,7 +6,7 @@ Overview
 ---
 This repository contains code and other resources for Behaviorial Cloning project for [Udacity Self-driving Car Nano Degree](https://in.udacity.com/course/self-driving-car-engineer-nanodegree--nd013/).
 
-The aim of the project is to train a Deep Convolutional Neural Network(CNN) model to drive a car in a simulator by learning from data gathered by a human driver driving in the same simulator.
+The aim of the project is to train a Deep Convolutional Neural Network(CNN) model to drive a car in a simulator by learning from data gathered by a human driver driving in the same simulator. While a simulator could produce lots of data, like steering angle, speed, throttle etc, this project focused on learning to predict the steering angle by looking at images captured from front facing cameras mounted on the car. 
 
 The project had the following stages:
 * Driving data was collected from a [simulator](https://d17h27t6h515a5.cloudfront.net/topher/2017/February/58ae46bb_linux-sim/linux-sim.zip) provided by Udaicty.
@@ -105,7 +105,25 @@ This will process each image and extract all activation maps for the image by ru
 ### `video.mp4`
 A demostration video of autonomous driving.
 
+# Model Design
+This section describes how the model was built.
 
----
+## Data Collection
+
+### Simulator settings
+The simulator was run at the lowest possible graphics settings.
+
+### Data collection strategy
+To collect human driving data, the simulator was run in training mode. The car was driven around the track for about 6 laps and driving data recorded. Then the direction was reversed and and another 3 laps were recorded. In addition a few short recordings were made of tricky parts of the track. The data recorded in the reverse direcion ensured that the model did not simply memorize the conditions of the forward lap and generalized well to test-time conditions. Some sharps turn were tricky and initial models would swerve wildly when negotiating them. The additional recordings helped the model stay in the middle of the road.
+
+### Loading the data
+The training data generated had about 80,000 images and a log file mapping the images to steering angles, throttle, speed and other parameters captured during the data collection stage. So actual images were not loaded all at once, instead they were loaded a few samples at a time using a Python generator described later. All the driving logs were loaded and analyzed, but only a small number of logs retained, as described below.  
+
+In [model.py](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/08ab6742c4b76a96857c5704f97038ece75f88aa/model.py#L48), the function `load_logs()` loads the driving logs. We passed `all_camera=True` to this function so it loaded the image paths of all three cameras and steering angles.
+
+### Preprocessing
+Models trained on the raw data showed a propensity to drive straight ahead. This was becasue the training data had a hugely disproportionate instances of driving straight. 
+
+
 
 
