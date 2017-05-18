@@ -114,7 +114,7 @@ This section describes how the model was built.
 The simulator was run at the lowest possible graphics settings. This was done to keep the CPU load low but discussions in the forums suggested that it was a good strategy to train on low resolution images.
 
 ### Data collection strategy
-To collect human driving data, the simulator was run in training mode. The car was driven around the track for about 6 laps and driving data recorded. Then the direction was reversed and and another 3 laps were recorded. In addition a few short recordings were made of tricky parts of the track. The data recorded in the reverse direcion ensured that the model did not simply memorize the conditions of the forward lap and generalized well to test-time conditions. Some sharps turn were tricky and initial models would swerve wildly when negotiating them. The additional recordings helped the model stay in the middle of the road.
+To collect human driving data, the simulator was run in training mode. The car was driven around the track using a keyboard for about 6 laps and driving data recorded. Then the direction was reversed and and another 3 laps were recorded. In addition a few short recordings were made of tricky parts of the track. The data recorded in the reverse direcion ensured that the model did not simply memorize the conditions of the forward lap and generalized well to test-time conditions. Some sharps turn were tricky and initial models would swerve wildly when negotiating them. The additional recordings helped the model stay in the middle of the road.
 
 The simulator recorded screenshots taken from the perspective of 3 cameras mounted a the fron of the car at the left, center and a right of the hood. Alongwith these images the simulator also recorded the driving parameters at the instant an image was captured. These included steering angle, throttle and speed and were written to **driving_log.csv**. The images below show the same potion of the track from the left, center and right camera's perspective, respectively.
 
@@ -200,11 +200,11 @@ In the preprocessing step, out of 77979 saples in the log file 44453 were droppe
 
 The train-test split was done in 70:30 ratio and then 20% of training data was reserved for validation. The function [`data_generator()`](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/08ab6742c4b76a96857c5704f97038ece75f88aa/model.py#L157) returns a generator. It was used to create training, validation and test generators.
 
-The training generator was configured to use a batch size of 32 but it fetched only 16 samples from the training data and then add another 16 samples by horizontally flipping the original 16 images and negating their steering angles.
+The training generator was configured to use a batch size of 32 but it fetched only 16 samples from the training data and then add another 16 samples by horizontally flipping the original 16 images and negating their steering angles. So effectively the number of training samples doubled to 2x18774 samples.
 
-The validation generator fetched 32 images from the validation data.
+The validation generator fetched 32 images from the validation data and did not use flipped images. 
 
-These generators were used to train the Nvidia model using mean sqaured loss metric and Adam optimizer. Adam was chosen because it works well with its default learning rate.
+These generators were used to train the Nvidia model using mean squared loss metric and Adam optimizer. Adam was chosen because it works well with its default learning rate.
 
 The training was run for 5 epochs as validation loss would start increasing beyond that. The final training loss was 0.323, while the validation loss was 0.316.
 
@@ -270,7 +270,16 @@ The model described above was tested in autonomous mode. It was able to drive su
 This has been redmedied to some degree by reducing overfitting as descibed above. This could be because at high speed the position of the car changes significantly by time the model returns a prediction. For the time being the top speed has been fixed at 20MPH to remedy this. It would be interesting to train a model on a combination of speed, throttle and camera images. Intuitively, the model should learn to focus on different parts of the vertical strech of a frame depending on the current speed. 
 
 * The model performs poorly if simulator graphics quality is changed significantly. 
-This is likely due to a big diffrence between the frame images in the two scenarios. This can be confirmed by looking at the activation maps for images taken of the same portion of a track at different quality settings.
+This is likely due to a big difference between the frame images in the two scenarios. This can be confirmed by looking at the activation maps for images taken of the same portion of a track at different quality settings.
 
+### A Long List of Todos
 
+This is list of things I would like to do. These are not rquired for project completion but a lot can be learnt from them.
 
+- Collect data using an anlog joystick. My game pad joystick being too sensitive.
+- Hook up my visulaization code to the simulator and display activations as an inset on the simulator screen.
+- Inspect the activation map for a significantly different graphics quality.
+- Train and test on the mountain track.
+- Include throttle and speed in the training data while predicting steering angles only.
+- Predict steering angle, speed and throttle using data from previous point.
+- Project activations from inner layers onto input images to see what higher level features the model learns.
