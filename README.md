@@ -30,6 +30,9 @@ The lab enviroment can be created with CarND Term1 Starter Kit. Click [here](htt
 
 ## Details About Files In This Directory
 
+### `model.h5`
+Saved model file.
+
 ### `drive.py`
 
 This file drives the car in autonomous mode. Usage of `drive.py` requires you have saved the trained model as an h5 file, i.e. `model.h5`. 
@@ -98,3 +101,11 @@ python keras-vis.py [<model>] [<img_dir>] [<layer>]
 - **layer** is an integer specifying the layer index for which activations are to be generated.
 
 This will process each image and extract all activation maps for the image by runninng the model on the image and saving the output of the specified layer. The individual activation maps of an image are then combined into a single activation map and saved in `img_dir/responses/<model>/`. 
+
+### `video.mp4`
+A demostration video of autonomous driving.
+
+
+---
+
+
