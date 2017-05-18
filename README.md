@@ -116,7 +116,7 @@ The simulator was run at the lowest possible graphics settings. This was done to
 ### Data collection strategy
 To collect human driving data, the simulator was run in training mode. The car was driven around the track for about 6 laps and driving data recorded. Then the direction was reversed and and another 3 laps were recorded. In addition a few short recordings were made of tricky parts of the track. The data recorded in the reverse direcion ensured that the model did not simply memorize the conditions of the forward lap and generalized well to test-time conditions. Some sharps turn were tricky and initial models would swerve wildly when negotiating them. The additional recordings helped the model stay in the middle of the road.
 
-The simulator recorded screenshots taken from the perspective of 3 cameras mounted a the fron of the car at the left, center and a right of the hood. Alongwith these images the simulator also recorded the driving parameters at the instant an image was captured. These included steering angle, throttle and speed and were written to **driving_log.csv**.
+The simulator recorded screenshots taken from the perspective of 3 cameras mounted a the fron of the car at the left, center and a right of the hood. Alongwith these images the simulator also recorded the driving parameters at the instant an image was captured. These included steering angle, throttle and speed and were written to **driving_log.csv**. The images below show the same potion of the track from the left, center and right camera's perspective, respectively.
 
 ![left camera](writeup-resources/left.jpg) 
 ![center camera](writeup-resources/center.jpg) 
@@ -137,4 +137,22 @@ To remove this bias the logs were equalized by calling [`drop_zero_steering()`](
 In the equalized logs, steering angles were corrected for images taken from left and right cameras. The simulator records images from three cameras as discussed above. The steering angles for left camera were increased reinforcing the need for a harder right turn, while the angles for right camera were reduced by a similar amount. A correction factor of 0.2 as suggested in the lecture videos, was passed to [`correct_steering_angle()`](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/08ab6742c4b76a96857c5704f97038ece75f88aa/model.py#L18) The distribution of driving anlges after the preprocessing looked much less skewed.
 
 ![processed data histogram](writeup-resources/data-distribution.png) 
+
+## Model Architecture
+The LeNet5 architecture was used initially. The [`Lenet5()`](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/08ab6742c4b76a96857c5704f97038ece75f88aa/model.py#L230) function reuturn a regression model that adapts the **LeNet5** classification model for our purpose, replacing the last dense layer of 10 neurons with a single neuron that predicts a real value (steering angle). The loss function has also been changed to mean squared loss (MSE) for regression. The model has the following layers
+
+| Layer         | Layer Specs                                | Output Size |
+|---------------|--------------------------------------------|-------------|
+| Normalization | lambda x: x / 255 - 0.5                    | 160x320x3   |
+| Cropping      | Cropping2D(cropping=((70, 25), (0, 0))     | 65x320x3    |
+| Convolution   | 6, 5x5 kernels, 1x1 stride, valid padding  | 61x316x6    |
+| RELU          | Non-linearity                              | 61x316x6    |
+| MaxPooling    | Downsampling by a factor of 2              | 30x158x6    |
+| Convolution   | 16, 5x5 kernels, 1x1 stride, valid pooling | 26x154x16   |
+| RELU          | Non-linearity                              | 26x154x16   |
+| MaxPooling    | Downsampling by a factor of 2              | 13x77x16    |
+| Flatten       | Conversion to vector                       | 16016       |
+| Dense         | Fully connected layer. No regularization   | 120         |
+| Dense         | Fully connected layer. No regularization   | 84          |
+| Dense         | Output layer                               | 1           |
 
