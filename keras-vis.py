@@ -47,11 +47,17 @@ else:
     image_folder = 'activation-test-data/full/'
     
 
+# Load model.
 model = load_model(model_name)
 
 
 
-# In[ ]:
+# Get input and output layers and input layer size.
+# Input layer sie will tell us if the images for
+# which activation needs to be generated have to be
+# resized.
+#
+# The size computed here is nrowsxncols not widthxheight.
 
 input = model.input
 input_img_shape = np.array(list(model.layers[0].input_shape[1:3]))
@@ -76,25 +82,28 @@ for filename in tqdm(os.listdir(image_folder)):
         print('Skipping ',filename)
         continue
 
+    # OpenCV arranges channels in BGR order while model uses RGB.
+    # Switch channel order.
     img = cv2.cvtColor(cv2.imread(image_folder+'/'+filename),cv2.COLOR_BGR2RGB)
-    print(img.shape,input_img_shape)
 
-    if img.shape[0] != input_img_shape[1] or img.shape[1] != input_img_shape[0]:
-        img = cv2.resize(img,(input_img_shape[1],input_img_shape[0]))
-        # plt.imshow(img)
-        # plt.title(filename)
-        # plt.show()
+    # Resize (if needed). Destination size is ncolsxnrows.
+    img = cv2.resize(img,(input_img_shape[1],input_img_shape[0]))
 
 
+    # Call the underlying function to generate output on this image.
     activations = functor([img[None,:,:,:],False])
-    
+
+    # Since there's only one image the activations list has only one member.
+    # Get first member from the list. This gives us all output layers.
     maps = activations[0]
     maps = (maps.squeeze() + 0.5)* 255
     maps = maps.astype(np.uint8)
    
-
-        
-    for i in range(maps.shape[-1]):
-        img_out = maps[:,:,i]
-        prefix,ext = filename.split('.')
-        cv2.imwrite(out_dir_path+prefix+'_map-'+str(i)+'.'+ext,img_out)
+    # Combine all activation maps. We take max to highlight any pixel
+    # that is active in any of the maps. The last axes is the index
+    # of the map layer.
+    combined_map = np.amax(maps,axis=2)
+    print(combined_map.shape)
+    prefix, ext = filename.split('.')
+    cv2.imwrite(out_dir_path + prefix + '-layer' + str(args.layer_index) + '-map.'
+                + ext, combined_map)
