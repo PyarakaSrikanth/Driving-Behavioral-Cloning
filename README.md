@@ -111,19 +111,23 @@ This section describes how the model was built.
 ## Data Collection
 
 ### Simulator settings
-The simulator was run at the lowest possible graphics settings.
+The simulator was run at the lowest possible graphics settings. This was done to keep the CPU load low but discussions in the forums suggested that it was a good strategy to train on low resolution images.
 
 ### Data collection strategy
 To collect human driving data, the simulator was run in training mode. The car was driven around the track for about 6 laps and driving data recorded. Then the direction was reversed and and another 3 laps were recorded. In addition a few short recordings were made of tricky parts of the track. The data recorded in the reverse direcion ensured that the model did not simply memorize the conditions of the forward lap and generalized well to test-time conditions. Some sharps turn were tricky and initial models would swerve wildly when negotiating them. The additional recordings helped the model stay in the middle of the road.
 
+The simulator recorded screenshots taken from the perspective of 3 cameras mounted a the fron of the car at the left, center and a right of the hood. Alongwith these images the simulator also recorded the driving parameters at the instant an image was captured. These included steering angle, throttle and speed and were written to **driving_log.csv**.
+
 ### Loading the data
-The training data generated had about 80,000 images and a log file mapping the images to steering angles, throttle, speed and other parameters captured during the data collection stage. So actual images were not loaded all at once, instead they were loaded a few samples at a time using a Python generator described later. All the driving logs were loaded and analyzed, but only a small number of logs retained, as described below.  
+There were about 80,000 images whose paths were recorded in **driving_log.csv**. So actual images were not loaded all at once, instead they were loaded a few samples at a time using a Python generator described later. However, all the driving logs were loaded and analyzed, but only a small number of logs retained, as described below.  
 
 In [model.py](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/08ab6742c4b76a96857c5704f97038ece75f88aa/model.py#L48), the function `load_logs()` loads the driving logs. We passed `all_camera=True` to this function so it loaded the image paths of all three cameras and steering angles.
 
 ### Preprocessing
-Models trained on the raw data showed a propensity to drive straight ahead. This was becasue the training data had a hugely disproportionate instances of driving straight. 
+Models trained on the raw data showed a propensity to drive straight ahead. This was becasue the training data had a hugely disproportionate instances of driving straight. The distribution of steering anlgles in the raw data looked like this:
 
+![raw data histogram](writeup-resources/raw-data-distribution.png) 
 
+To remove this bias the logs were equalized by calling [`drop_zero_steering()`](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/08ab6742c4b76a96857c5704f97038ece75f88aa/model.py#L73). Driving logs for 75% percent of steering angles in the range [-0.05,0.05] were dropped. The percentage and range values are configurable via training options in the [code](https://github.com/farhanhubble/CarND-Behavioral-Cloning-P3/blob/08ab6742c4b76a96857c5704f97038ece75f88aa/model.py#L270).
 
-
+In the equalized logs, steering angles were corrected for images taken from left and right cameras.
